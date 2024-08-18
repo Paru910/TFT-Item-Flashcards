@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>TFTアイテム合成表</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+        img {
+            width: 128px;
+            height: 128px;
+            margin: 10px;
+        }
+        button {
+            margin: 10px;
+            padding: 10px;
+            background-color: #1f1f1f;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #333333;
+        }
+    </style>
+</head>
+<body>
+    <h1>TFTアイテム合成表</h1>
+    <div id="image-container"></div>
+    <button onclick="toggleAnswer()">答えを見る</button>
+    <button onclick="nextItem()">次へ</button>
+    <button onclick="prevItem()">前へ</button>
+    <button onclick="toggleMode()">表示順を変更</button>
+
+    <script>
+        const items = [];
+        for (let i = 1; i <= 9; i++) {
+            for (let j = i; j <= 9; j++) {
+                items.push({
+                    result: `${i}${j}.png`,
+                    materials: [`${i}.png`, `${j}.png`]
+                });
+            }
+        }
+
+        let currentIndex = -1;
+        let showAnswer = false;
+        let showMaterials = false;
+        const history = [];
+        let remainingItems = [...items];
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function updateImage() {
+            const container = document.getElementById('image-container');
+            container.innerHTML = '';
+
+            if (showAnswer) {
+                if (showMaterials) {
+                    const img = document.createElement('img');
+                    img.src = remainingItems[currentIndex].result;
+                    img.onerror = function() {
+                        alert('画像が見つかりません: ' + img.src);
+                    };
+                    container.appendChild(img);
+                } else {
+                    remainingItems[currentIndex].materials.forEach(src => {
+                        const img = document.createElement('img');
+                        img.src = src;
+                        img.onerror = function() {
+                            alert('画像が見つかりません: ' + img.src);
+                        };
+                        container.appendChild(img);
+                    });
+                }
+            } else {
+                if (showMaterials) {
+                    remainingItems[currentIndex].materials.forEach(src => {
+                        const img = document.createElement('img');
+                        img.src = src;
+                        img.onerror = function() {
+                            alert('画像が見つかりません: ' + img.src);
+                        };
+                        container.appendChild(img);
+                    });
+                } else {
+                    const img = document.createElement('img');
+                    img.src = remainingItems[currentIndex].result;
+                    img.onerror = function() {
+                        alert('画像が見つかりません: ' + img.src);
+                    };
+                    container.appendChild(img);
+                }
+            }
+        }
+
+        function toggleAnswer() {
+            showAnswer = !showAnswer;
+            updateImage();
+        }
+
+        function nextItem() {
+            if (remainingItems.length === 0) {
+                remainingItems = [...items];
+                shuffle(remainingItems);
+            }
+            currentIndex = (currentIndex + 1) % remainingItems.length;
+            history.push(currentIndex);
+            showAnswer = false;
+            updateImage();
+        }
+
+        function prevItem() {
+            if (history.length > 1) {
+                history.pop();
+                currentIndex = history[history.length - 1];
+                showAnswer = false;
+                updateImage();
+            }
+        }
+
+        function toggleMode() {
+            showMaterials = !showMaterials;
+            updateImage();
+        }
+
+        // 初期表示
+        shuffle(remainingItems);
+        nextItem();
+    </script>
+</body>
+</html>
