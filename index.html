@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>TFTアイテム合成表</title>
+    <title>TFTアイテム単語帳</title>
     <style>
         body {
             background-color: #121212;
@@ -40,15 +40,34 @@
                 padding: 15px;
             }
         }
+        .details {
+            margin: 10px;
+            padding: 10px;
+            background-color: #1f1f1f;
+            border-radius: 5px;
+            display: none; /* 初期状態では非表示 */
+        }
+        .detail-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .detail-separator {
+            margin: 10px 0;
+            border-top: 1px solid #333;
+        }
     </style>
 </head>
 <body>
-    <h1>TFTアイテム合成表</h1>
+    <h1>TFTアイテム単語帳</h1>
     <div id="image-container"></div>
     <button onclick="toggleAnswer()">答えを見る</button>
     <button onclick="nextItem()">次へ</button>
     <button onclick="prevItem()">前へ</button>
     <button onclick="toggleMode()">表示順を変更</button>
+    <button onclick="toggleDetails()">説明</button>
+
+    <div id="details-container" class="details"></div>
 
     <script>
         const items = [];
@@ -61,9 +80,69 @@
             }
         }
 
+        const itemDetails = {
+            '1':'B.F.ソード\nAD10%',
+            '2':'リカーブボウ\nAS10%',
+            '3':'チェインベスト\nAR20',
+            '4':'ネガトロンクローク\nMR20',
+            '5':'ムダニデカイロッド\nAP10',
+            '6':'女神の涙\nMP15',
+            '7':'ジャイアントベルト\nHP150',
+            '8':'スパーリンググローブ\nCC20%',
+            '9':'へら\nきっと何かが起こるはず',
+            '11':'デスブレード\nAD55%',
+            '12':'ジャイアントスレイヤー\nAD30% AP20 AS10\n最大体力が1750を上回る敵に対して、与えるダメージが25%増加する',
+            '13':'ヘクステックガンブレード\nAD15% AP15\n最も残り体力の割合が低い味方の体力を、与えたダメージの20%分回復する',
+            '14':'ショウジンの矛\nAD20% AP20 MP15\n通常攻撃時にマナを追加で5獲得する',
+            '15':'ナイトエッジ\nAD10% AR20\n各戦闘で1回のみ\n 体力が60%になると、少しの間、対象指定不可状態になり、ステータス弱体化効果を除去する\nその後、攻撃速度が15%増加する',
+            '16':'ブラッドサースター\nAD20% AP20 MR20\n各戦闘で1回、体力が40%になった際、最大体力の25%にあたる耐久値を持つシールドを獲得する\nこのシールドは最大で5秒間持続する',
+            '17':'ステラックの篭手\nAD15% HP200\n各戦闘で1回のみ、体力が60%になると、最大体力が25%、攻撃力が35%増加する\n',
+            '18':'インフィニティエッジ\nCC35% CD35%\nスキルがクリティカル判定を持つようになる\n装備者のスキルがすでにクリティカル判定を持っている場合は、代わりにクリティカル率が10%増加する',
+            '19':'シュガークラフトの紋章\nAD10%\n装備者が「シュガークラフト」の特性を獲得する\n',
+            '22':'レッドバフ\nAS40%\n通常攻撃とスキルが5秒間、対象に1%の燃焼と33%の負傷を付与する\n燃焼\n 毎秒、対象の最大体力の一定割合にあたる確定ダメージを与える\n負傷\n 受ける体力回復効果を低下させる',
+            '23':'グインソーレイジブレード\nAP10 AS15%\n通常攻撃するたびに、攻撃速度が5%増加する',
+            '24':'スタティックシヴ\nAP15 AS20% MP15\n通常攻撃3回ごとに、敵4体に35の魔法ダメージを与えて、5秒間、30%の細断を付与する\n 細断\n 魔法防御を低下させる',
+            '25':'巨人の誓い\nAS10% AR20\n通常攻撃した際、もしくはダメージを受けた際に、攻撃力が2%、魔力が1増加する\nこの効果は25回までスタックする\n最大スタックになると、物理防御が20、魔法防御が20増加する',
+            '26':'ルナーンハリケーン\nAD25% AS10% MR20\n通常攻撃時に近くの敵1体に対して矢を放ち、装備者の攻撃力の55%にあたる物理ダメージを与える',
+            '27':'ナッシャートゥース\nAP30 AS10% HP150\nスキル発動から5秒間、攻撃速度が40%増加する',
+            '28':'ラストウィスパー\nAD15% AS25% CC20%\n敵に物理ダメージを与えると、3秒間、対象に30%の分解を付与する\nこの効果はスタックしない\n[重複不可 - チャンピオン1体に1つのみ] 分解\n 物理防御を低下させる',
+            '29':'パイロの紋章\nAS10%\n装備者が「パイロ」の特性を獲得する',
+            '33':'ラバドンデスキャップ\nAP50',
+            '34':'アークエンジェルスタッフ\nAP20 MP15\n戦闘開始時\n 戦闘中、5秒ごとに魔力が30増加する',
+            '35':'クラウンガード\nAP20 AR20 HP100\n戦闘開始時\n 8秒間、自身の最大体力の30%にあたるシールドを獲得する\nシールドが消滅すると、魔力が35増加する',
+            '36':'アイオニックスパーク\nAP15 HP150 MR25\n2マス以内の敵に30%の細断を付与する\nスキルを使用した敵に対し、対象が使用したマナの160%にあたる魔法ダメージを与える\n 細断\n 魔法防御を低下させる',
+            '37':'モレロノミコン\nAP25 AS10% HP150\n通常攻撃とスキルが10秒間、対象に1%の燃焼と33%の負傷を付与する\n[重複不可 - チャンピオン1体に1つのみ]\n燃焼\n 毎秒、対象の最大体力の一定割合にあたる確定ダメージを与える\n負傷\n 受ける体力回復効果を低下させる',
+            '38':'ジュエルガントレット\nAP35 CC35%\nスキルがクリティカル判定を持つようになる\n装備者のスキルがすでにクリティカル判定を持っている場合は、代わりにクリティカル率が10%増加する',
+            '39':'ポータルの紋章\nAP10\n装備者が「ポータル」の特性を獲得する',
+            '44':'ブルーバフ\nAD20% AP20 MP20\n最大マナが10低下する\n装備者がキルまたはアシストを獲得すると、8秒間、与えるダメージが8%増加する\n[重複不可 - チャンピオン1体につき1つのみ]',
+            '45':'プロテクターの誓い\nAR20 MP30\n各戦闘で1回のみ、体力が40%になった際、最大体力の25%にあたる耐久値を持つシールドを獲得する\nこのシールドは5秒間持続する\nさらに、物理防御が20、魔法防御が20増加する',
+            '46':'アダプティブヘルム\nAP15 MR20 MP15\n戦闘開始時\n 開始時の位置に応じて異なる効果を獲得する\n前衛2列\n 物理防御と魔法防御40\n通常攻撃を受けるとマナを1獲得\n後衛2列\n 魔力20\n3秒ごとにマナを10獲得',
+            '47':'リデンプション\nHP150 MP15\n5秒ごとに、1マス以内にいる味方が減少体力の15%にあたる体力を回復する\nまた、これらの味方は5秒間、耐久力が10%増加する(この効果はスタックしない)',
+            '48':'ハンドオブジャスティス\nCC20% MP15\n2つの効果を獲得する\n攻撃力が15%、魔力が15増加する\nオムニヴァンプが15%増加する\n毎ラウンド、ランダムでこれらのうち1つの効果が2倍になる',
+            '49':'妖精の紋章\nMP15\n装備者が「妖精」の特性を獲得する',
+            '55':'ブランブルベスト\nAR55\n最大体力が5%増加する\n通常攻撃で受けるダメージが8%軽減される\n通常攻撃を受けると、隣接するすべての敵に100の魔法ダメージを与える\nクールダウン\n 2秒',
+            '56':'ガーゴイルストーンプレート\nAR30 HP100 MR30\n自身を攻撃対象としている敵1体につき、10の物理防御と10の魔法防御を獲得する',
+            '57':'サンファイアケープ\nAR20 HP250\n2秒ごとに、2マス以内にいる敵1体に10秒間、1%の燃焼と33%の負傷を付与する\n[重複不可 - チャンピオン1体に1つのみ]\n燃焼\n 毎秒、対象の最大体力の一定割合にあたる確定ダメージを与える\n負傷\n 受ける体力回復効果を低下させる',
+            '58':'揺るがぬ心\nAR20 CC20% HP250\n8%の耐久力を獲得する\n体力が50%を上回っていると、代わりに15%の耐久力を獲得する',
+            '59':'凍結の紋章\nAR20\n装備者が「凍結」の特性を獲得する',
+            '66':'ドラゴンクロウ\nMR65\n最大体力が9%増加する\n2秒ごとに最大体力の2.5%を回復する',
+            '67':'イーブンシュラウド\nHP150 MR20\n2マス以内の敵に30%の分解を付与する\n戦闘開始から10秒間、物理防御と魔法防御が25増加する\n分解\n 物理防御を低下させる',
+            '68':'クイックシルバー\nAS30% CC20% MR20\n戦闘開始時\n 14秒間、行動妨害効果を受けなくなる\nこの効果時間中、2秒ごとに攻撃速度が4%増加する\n[重複不可 - チャンピオン1体に1つのみ]',
+            '69':'ウィッチクラフトの紋章\nMR20\n装備者が「ウィッチクラフト」の特性を獲得する',
+            '77':'ワーモグアーマー\nHP600\n最大体力が12%増加する',
+            '78':'ガードブレーカー\nAP10 AS20% CC20% HP150\nシールドにダメージを与えると、3秒間、与えるダメージが25%増加する',
+            '79':'エルドリッチの紋章\nHP150\n装備者が「エルドリッチ」の特性を獲得する',
+            '88':'盗賊のグローブ\nCC20% HP150\n各ラウンド\n ランダムなアイテムを2つ装備する\n[アイテムスロットを3つ使用]',
+            '89':'ハニーマンシーの紋章\nCC20%\n装備者が「ハニーマンシー」の特性を獲得する',
+            '99':'タクティシャンの王冠\nAD3% AP3 AS3% AR3 HP33 MR3 MP3\nチームサイズの上限が1増加する',
+
+
+        };
+
         let currentIndex = -1;
         let showAnswer = false;
         let showMaterials = false;
+        let showDetails = false;
         const history = [];
         let remainingItems = [...items];
 
@@ -79,47 +158,22 @@
             container.innerHTML = '';
 
             if (showAnswer) {
-                if (showMaterials) {
-                    const img = document.createElement('img');
-                    img.src = remainingItems[currentIndex].result;
-                    img.onerror = function() {
-                        alert('画像が見つかりません: ' + img.src);
-                    };
-                    container.appendChild(img);
-                } else {
-                    remainingItems[currentIndex].materials.forEach(src => {
-                        const img = document.createElement('img');
-                        img.src = src;
-                        img.onerror = function() {
-                            alert('画像が見つかりません: ' + img.src);
-                        };
-                        container.appendChild(img);
-                    });
-                }
+                const img = document.createElement('img');
+                img.src = remainingItems[currentIndex].result;
+                container.appendChild(img);
             } else {
-                if (showMaterials) {
-                    remainingItems[currentIndex].materials.forEach(src => {
-                        const img = document.createElement('img');
-                        img.src = src;
-                        img.onerror = function() {
-                            alert('画像が見つかりません: ' + img.src);
-                        };
-                        container.appendChild(img);
-                    });
-                } else {
+                remainingItems[currentIndex].materials.forEach(src => {
                     const img = document.createElement('img');
-                    img.src = remainingItems[currentIndex].result;
-                    img.onerror = function() {
-                        alert('画像が見つかりません: ' + img.src);
-                    };
+                    img.src = src;
                     container.appendChild(img);
-                }
+                });
             }
         }
 
         function toggleAnswer() {
             showAnswer = !showAnswer;
             updateImage();
+            updateDetails();
         }
 
         function nextItem() {
@@ -129,22 +183,62 @@
             }
             currentIndex = (currentIndex + 1) % remainingItems.length;
             history.push(currentIndex);
-            showAnswer = false;
+            showAnswer = showMaterials; // 表示順に応じて初期表示を設定
             updateImage();
+            updateDetails();
         }
 
         function prevItem() {
             if (history.length > 1) {
                 history.pop();
                 currentIndex = history[history.length - 1];
-                showAnswer = false;
+                showAnswer = showMaterials; // 表示順に応じて初期表示を設定
                 updateImage();
+                updateDetails();
             }
         }
 
         function toggleMode() {
             showMaterials = !showMaterials;
+            showAnswer = showMaterials; // 表示順に応じて初期表示を設定
             updateImage();
+            updateDetails(); // ここで詳細も更新
+        }
+
+        function toggleDetails() {
+            showDetails = !showDetails;
+            const detailsContainer = document.getElementById('details-container');
+            detailsContainer.style.display = showDetails ? 'block' : 'none';
+            updateDetails(); // 詳細の表示切り替え時にも詳細を更新
+        }
+
+        function updateDetails() {
+            const detailsContainer = document.getElementById('details-container');
+            const currentMaterials = remainingItems[currentIndex].materials;
+            const uniqueMaterials = [...new Set(currentMaterials)];
+            const resultId = remainingItems[currentIndex].result.split('.')[0];
+            const resultDetail = itemDetails[resultId] || '詳細情報はありません';
+
+            detailsContainer.innerHTML = '';
+
+            if (showDetails) {
+                if (showAnswer) {
+                    // 合成アイテムのみを表示
+                    detailsContainer.innerHTML = `
+                        <div class="detail-item">
+                            ${resultDetail.replace(/\n/g, '<br>')}
+                        </div>
+                    `;
+                } else {
+                    // 素材アイテムの説明のみを表示
+                    detailsContainer.innerHTML = uniqueMaterials
+                        .map(src => {
+                            const itemId = src.split('.')[0];
+                            return `<div class="detail-item">${itemDetails[itemId].replace(/\n/g, '<br>') || '詳細情報はありません'}</div>`;
+                        })
+                        .join('');
+                }
+            }
         }
 
         // 初期表示
